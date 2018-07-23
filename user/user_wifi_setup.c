@@ -52,7 +52,7 @@ static void ICACHE_FLASH_ATTR wifi_station_connect_callback(uint8_t status)
 {
 	if(status == STATION_GOT_IP)
 	{
-		os_printf("Assoiciation OK!\n");
+		os_printf("Assoiciation OK, and start UDP port!\n");
 	}
 	else
 	{
