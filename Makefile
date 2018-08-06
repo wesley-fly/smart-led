@@ -69,9 +69,9 @@ LINKFLAGS_eagle.app.v6 = \
 	-lmain	\
 	-ljson	\
 	-lupgrade\
-	-lssl	\
+	-lmbedtls	\
 	-lpwm	\
-	-lsmartconfig \
+	-ldriver \
 	$(DEP_LIBS_eagle.app.v6)					\
 	-Wl,--end-group
 

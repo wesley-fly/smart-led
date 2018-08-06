@@ -17,7 +17,10 @@
  /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/sys/string.h \
  ../../include/os_type.h ../../include/ets_sys.h ../../include/c_types.h \
  ../../include/eagle_soc.h ../include/user_config.h \
+ ../../driver_lib/include/driver/uart.h \
+ ../../driver_lib/include/driver/uart_register.h \
+ ../../include/eagle_soc.h ../../include/c_types.h \
  ../../include/user_interface.h ../../include/ip_addr.h \
  ../../include/queue.h ../../include/spi_flash.h ../../include/gpio.h \
  ../include/user_sensor.h ../include/user_wifi_setup.h \
- ../../include/os_type.h ../include/user_socket.h
+ ../../include/os_type.h ../include/user_sensor.h ../../include/espconn.h

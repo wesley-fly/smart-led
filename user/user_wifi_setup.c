@@ -5,6 +5,39 @@
 static ETSTimer WiFiStationLinker;
 static uint8_t wifiStatus = STATION_IDLE, lastWifiStatus = STATION_IDLE;
 WifiConnectCallback wifiStationCb = NULL;
+LOCAL os_timer_t app_socket_time_serv;
+
+LOCAL ICACHE_FLASH_ATTR
+void app_recv(void *arg, char *pdata, unsigned short len)
+{
+    struct espconn *pesp_conn = arg;
+	static char __light_cmd[16];
+	os_memset(__light_cmd, 0, sizeof(__light_cmd));
+	os_memcpy(__light_cmd, pdata, len);
+	if(os_strncmp(__light_cmd, "11111111", 8) == 0)
+	{
+		system_os_post(USER_TASK_PRIO_0, SIG_RX_APP, 'y');
+	} 
+	else if(os_strncmp(__light_cmd, "00000000", 8) == 0)
+	{
+		system_os_post(USER_TASK_PRIO_0, SIG_RX_APP, 'n');
+	}
+}
+
+void ICACHE_FLASH_ATTR user_socket_init(void)
+{
+	LOCAL struct espconn esp_conn;
+	LOCAL esp_udp espudp;
+
+	esp_conn.type = ESPCONN_UDP;
+	esp_conn.state = ESPCONN_NONE;
+	esp_conn.proto.udp = &espudp;
+	esp_conn.proto.udp->local_port = LISTEN_UDP_PORT;
+	espconn_regist_recvcb(&esp_conn, app_recv);
+
+	espconn_create(&esp_conn);
+}
+
 static void ICACHE_FLASH_ATTR  wifi_station_connect_check(void *arg)
 {
 	struct ip_info ipConfig;
@@ -15,7 +48,8 @@ static void ICACHE_FLASH_ATTR  wifi_station_connect_check(void *arg)
 	if (wifiStatus == STATION_GOT_IP && ipConfig.ip.addr != 0)
 	{
 		os_timer_setfn(&WiFiStationLinker, (os_timer_func_t *)wifi_station_connect_check, NULL);
-		os_timer_arm(&WiFiStationLinker, 15*1000, 0);
+		os_timer_arm(&WiFiStationLinker, 10*1000, 0);
+		os_printf("WiFi Connect OK, start check every 10 seconds\n");
 	}
 	else
 	{
@@ -37,7 +71,9 @@ static void ICACHE_FLASH_ATTR  wifi_station_connect_check(void *arg)
 		else
 		{
 			os_printf("STATION_IDLE\r\n");
+			wifi_station_connect();
 		}
+		os_printf("WiFi Connect error, so re-connect it every 2 secondss\r\n");
 
 		os_timer_setfn(&WiFiStationLinker, (os_timer_func_t *)wifi_station_connect_check, NULL);
 		os_timer_arm(&WiFiStationLinker, 2*1000, 0);
@@ -48,11 +84,13 @@ static void ICACHE_FLASH_ATTR  wifi_station_connect_check(void *arg)
 			wifiStationCb(wifiStatus);
 	}
 }
+
 static void ICACHE_FLASH_ATTR wifi_station_connect_callback(uint8_t status)
 {
 	if(status == STATION_GOT_IP)
 	{
 		os_printf("Assoiciation OK, and start UDP port!\n");
+		user_socket_init();
 	}
 	else
 	{
@@ -68,26 +106,33 @@ static void ICACHE_FLASH_ATTR register_station_connect_callback(WifiConnectCallb
 
 void ICACHE_FLASH_ATTR user_wifi_setup_init(void)
 {
-	struct ip_info sta_info;
 	struct station_config sta_config;
+	wifi_station_set_auto_connect(0);
+	wifi_station_disconnect();
+	wifi_set_opmode_current(STATION_MODE);
 
 	if (true == wifi_station_dhcpc_status())
 	{
-		wifi_station_dhcpc_stop();
+		os_printf("DHCP client on, so stop it\n");
+		if(true != wifi_station_dhcpc_stop())
+			os_printf("Stop DHCP client failed!\n");
 	}
+	
+	struct ip_info sta_info;
 	sta_info.ip.addr = ipaddr_addr(STATION_IP_ADDR);
 	sta_info.gw.addr = ipaddr_addr(STATION_IP_GW);
 	sta_info.netmask.addr = ipaddr_addr(STATION_IP_NETMASK);
 	if ( true != wifi_set_ip_info(STATION_IF,&sta_info)) {
-		os_printf("set default ip wrong\n");
+		os_printf("Set default ip wrong\n");
 	}
+	
 	register_station_connect_callback(wifi_station_connect_callback);
-	wifi_set_opmode_current(STATION_MODE);
 	
 	os_memset(&sta_config, 0, sizeof(struct station_config));
 	os_memcpy(sta_config.ssid, ASSOC_AP_SSID, os_strlen(ASSOC_AP_SSID));
 	os_memcpy(sta_config.password, ASSOC_AP_PSWD, os_strlen(ASSOC_AP_PSWD));
-	wifi_station_set_config_current(&sta_config);
+	if(true != wifi_station_set_config_current(&sta_config))
+		os_printf("Set sta_config client failed!\n");
 	
 	os_timer_disarm(&WiFiStationLinker);
 	os_timer_setfn(&WiFiStationLinker, (os_timer_func_t *)wifi_station_connect_check, NULL);

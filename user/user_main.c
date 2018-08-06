@@ -1,9 +1,10 @@
 #include "osapi.h"
+#include "driver/uart.h"
+
 #include "user_interface.h"
 
 #include "user_sensor.h"
 #include "user_wifi_setup.h"
-#include "user_socket.h"
 
 LOCAL uint8 smart_led_version[20] = {0};
 #define SMART_LED_VERSION "V1.0.0.0"
@@ -86,6 +87,8 @@ user_rf_pre_init(void)
 void ICACHE_FLASH_ATTR
 user_init(void)
 {
+	uart_init(BIT_RATE_115200, BIT_RATE_115200);
+	os_delay_us(1000);
     os_printf("SDK version:%s\n", system_get_sdk_version());
 	os_sprintf(smart_led_version,"%s",SMART_LED_VERSION);
 	os_printf("Smart Led VERSION = %s\n",smart_led_version);

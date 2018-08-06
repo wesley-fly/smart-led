@@ -1,9 +1,9 @@
 .output/eagle/debug/obj/user_wifi_setup.o .output/eagle/debug/obj/user_wifi_setup.d : user_wifi_setup.c ../include/user_wifi_setup.h \
  ../../include/os_type.h ../../include/ets_sys.h ../../include/c_types.h \
- ../../include/eagle_soc.h ../../include/user_interface.h \
- ../../include/os_type.h ../../include/ip_addr.h ../../include/queue.h \
- ../include/user_config.h ../../include/spi_flash.h ../../include/gpio.h \
- ../../include/osapi.h \
+ ../../include/eagle_soc.h ../include/user_sensor.h \
+ ../../include/user_interface.h ../../include/os_type.h \
+ ../../include/ip_addr.h ../../include/queue.h ../include/user_config.h \
+ ../../include/spi_flash.h ../../include/gpio.h ../../include/osapi.h \
  /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/string.h \
  /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/_ansi.h \
  /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/newlib.h \
@@ -19,4 +19,5 @@
  /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/sys/lock.h \
  /opt/xtensa-lx106-elf/lib/gcc/xtensa-lx106-elf/4.8.2/include/stddef.h \
  /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/sys/cdefs.h \
- /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/sys/string.h
+ /opt/xtensa-lx106-elf/xtensa-lx106-elf/include/sys/string.h \
+ ../../include/espconn.h
