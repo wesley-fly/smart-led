@@ -12,10 +12,11 @@
 #define SENSER_QUEUE_SIZE 4
 os_event_t senser_procTaskQueue[SENSER_QUEUE_SIZE];
 static ETSTimer illuminance_timer;
+static ETSTimer human_timer;
 
 LOCAL void ICACHE_FLASH_ATTR user_reset_pwm_duty(uint32 duty, uint8 channel)
 {
-    //os_printf("PWM set duty : %d \r\n",duty);
+    os_printf("PWM set duty : %d \r\n",duty);
     pwm_set_duty(duty,channel);
 	pwm_start();
 }
@@ -36,7 +37,7 @@ LOCAL void ICACHE_FLASH_ATTR Senser_Task(os_event_t *events)
 			if((char)events->par == 'l')
 				user_reset_pwm_duty(PWM_DUTY_MAX,0);
 			else if((char)events->par == 'm')
-				user_reset_pwm_duty(PWM_DUTY_MAX*2/3,0);
+				user_reset_pwm_duty(PWM_DUTY_MAX/2,0);
 			else if((char)events->par == 'h')
 				user_reset_pwm_duty(0,0);
 		break;
@@ -178,7 +179,25 @@ static void ICACHE_FLASH_ATTR  get_illuminance_data_cb(void *arg)
 	os_timer_setfn(&illuminance_timer, (os_timer_func_t *)get_illuminance_data_cb, NULL);
 	os_timer_arm(&illuminance_timer, 5*1000, 0);
 }
+static void ICACHE_FLASH_ATTR  human_intterupt_init(void *arg)
+{
+	os_timer_disarm(&human_timer);
+	os_printf("human_intterupt_init started\r\n");
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
 
+	//PIN_FUNC_SELECT(SENSOR_INFRARED_LED_IO_MUX, SENSOR_INFRARED_LED_IO_FUNC);
+	GPIO_DIS_OUTPUT(GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM));
+	
+	ETS_GPIO_INTR_ATTACH(human_intr_handler,NULL);
+	ETS_GPIO_INTR_DISABLE();
+	gpio_output_set(0, 0, 0, GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM));
+	gpio_register_set(GPIO_PIN_ADDR(SENSOR_INFRARED_LED_IO_NUM), GPIO_PIN_INT_TYPE_SET(GPIO_PIN_INTR_DISABLE)
+						  | GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_DISABLE)
+						  | GPIO_PIN_SOURCE_SET(GPIO_AS_PIN_SOURCE));
+	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(SENSOR_INFRARED_LED_IO_NUM));
+	gpio_pin_intr_state_set(GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM), GPIO_PIN_INTR_ANYEDGE);
+	ETS_GPIO_INTR_ENABLE();
+}
 void ICACHE_FLASH_ATTR
 user_sensor_init(void)
 {
@@ -202,19 +221,10 @@ user_sensor_init(void)
 	os_timer_setfn(&illuminance_timer, (os_timer_func_t *)get_illuminance_data_cb, NULL);
 	os_timer_arm(&illuminance_timer, 5*1000, 0);
 	
-	//human intterupt read
-	PIN_FUNC_SELECT(SENSOR_INFRARED_LED_IO_MUX, SENSOR_INFRARED_LED_IO_FUNC);
-	GPIO_DIS_OUTPUT(GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM));
-	
-	ETS_GPIO_INTR_ATTACH(human_intr_handler,NULL);
-    ETS_GPIO_INTR_DISABLE();
-	gpio_output_set(0, 0, 0, GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM));
-	gpio_register_set(GPIO_PIN_ADDR(SENSOR_INFRARED_LED_IO_NUM), GPIO_PIN_INT_TYPE_SET(GPIO_PIN_INTR_DISABLE)
-                          | GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_DISABLE)
-                          | GPIO_PIN_SOURCE_SET(GPIO_AS_PIN_SOURCE));
-	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(SENSOR_INFRARED_LED_IO_NUM));
-	gpio_pin_intr_state_set(GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM), GPIO_PIN_INTR_ANYEDGE);
-	ETS_GPIO_INTR_ENABLE();
+	//human intterupt init
+	os_timer_disarm(&human_timer);
+	os_timer_setfn(&human_timer, (os_timer_func_t *)human_intterupt_init, NULL);
+	os_timer_arm(&human_timer, 60*1000, 0);
 
 	system_os_task(Senser_Task, USER_TASK_PRIO_0, senser_procTaskQueue, SENSER_QUEUE_SIZE);
 }
