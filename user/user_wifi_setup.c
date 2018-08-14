@@ -50,6 +50,36 @@ static void ICACHE_FLASH_ATTR  wifi_station_connect_check(void *arg)
 		os_timer_setfn(&WiFiStationLinker, (os_timer_func_t *)wifi_station_connect_check, NULL);
 		os_timer_arm(&WiFiStationLinker, 10*1000, 0);
 		os_printf("WiFi Connect OK, start check every 10 seconds\n");
+		/*static int tmp = 0;
+		if (tmp == 0){
+			os_printf("pwm_set_duty PWM_DUTY_MAX\n");
+			pwm_set_duty(PWM_DUTY_MAX,0);
+		}
+		else if (tmp == 1)
+		{
+			os_printf("pwm_set_duty PWM_DUTY_MAX*9/16\n");
+			pwm_set_duty(PWM_DUTY_MAX*9/16,0);
+		}
+		else if (tmp == 2)
+			{
+			os_printf("pwm_set_duty PWM_DUTY_MAX*10/16\n");
+		pwm_set_duty(PWM_DUTY_MAX*10/16,0);
+			}
+		else if (tmp == 3)
+			{
+			os_printf("pwm_set_duty PWM_DUTY_MAX*11/16\n");
+		pwm_set_duty(PWM_DUTY_MAX*11/16,0);
+			}
+		else if (tmp == 4)
+			{
+			os_printf("pwm_set_duty 0\n");
+		pwm_set_duty(0,0);
+			}
+		pwm_start();
+
+		tmp++;
+		if(tmp == 5)
+			tmp = 0;*/
 	}
 	else
 	{

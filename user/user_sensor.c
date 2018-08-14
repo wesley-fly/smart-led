@@ -33,11 +33,11 @@ LOCAL void ICACHE_FLASH_ATTR Senser_Task(os_event_t *events)
 				GPIO_OUTPUT_SET(GPIO_ID_PIN(LED_ONOFF_IO_NUM), LEVEL_H);
 		break;
 		case SIG_RX_ILLUMINANCE:
-			os_printf("ILLUMINANCE events->sig : %c \n",(char)events->par);
+			os_printf("Light events->sig : %c \n",(char)events->par);
 			if((char)events->par == 'l')
 				user_reset_pwm_duty(PWM_DUTY_MAX,0);
 			else if((char)events->par == 'm')
-				user_reset_pwm_duty(PWM_DUTY_MAX/2,0);
+				user_reset_pwm_duty(PWM_DUTY_MAX*11/16,0);
 			else if((char)events->par == 'h')
 				user_reset_pwm_duty(0,0);
 		break;
@@ -166,13 +166,13 @@ static void ICACHE_FLASH_ATTR  get_illuminance_data_cb(void *arg)
 
 		ValueLux = (1 << Exponent) * Mantissa * 1000 / 45;
 		ValueLux = ValueLux * 10 / 14;
-		os_printf("i2c_master_readByte Light : %d %d, ret = %d \r\n",illuminance_data[0],illuminance_data[1],ValueLux);
+		os_printf("i2c_master_readByte Light ValueLux: %d \r\n",ValueLux);
 
-		if(ValueLux <= 10000)
+		if(ValueLux <= 15000)
 			system_os_post(USER_TASK_PRIO_0, SIG_RX_ILLUMINANCE, 'h');
-		else if ((ValueLux > 10000)&&(ValueLux <= 2000000))
+		else if ((ValueLux > 15000)&&(ValueLux <= 40000))
 			system_os_post(USER_TASK_PRIO_0, SIG_RX_ILLUMINANCE, 'm');
-		else if(ValueLux > 2000000)
+		else if(ValueLux > 40000)
 			system_os_post(USER_TASK_PRIO_0, SIG_RX_ILLUMINANCE, 'l');
 	}
 	
@@ -185,7 +185,6 @@ static void ICACHE_FLASH_ATTR  human_intterupt_init(void *arg)
 	os_printf("human_intterupt_init started\r\n");
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
 
-	//PIN_FUNC_SELECT(SENSOR_INFRARED_LED_IO_MUX, SENSOR_INFRARED_LED_IO_FUNC);
 	GPIO_DIS_OUTPUT(GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM));
 	
 	ETS_GPIO_INTR_ATTACH(human_intr_handler,NULL);
@@ -197,6 +196,11 @@ static void ICACHE_FLASH_ATTR  human_intterupt_init(void *arg)
 	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(SENSOR_INFRARED_LED_IO_NUM));
 	gpio_pin_intr_state_set(GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM), GPIO_PIN_INTR_ANYEDGE);
 	ETS_GPIO_INTR_ENABLE();
+
+	if(GPIO_INPUT_GET(GPIO_ID_PIN(SENSOR_INFRARED_LED_IO_NUM)))
+		system_os_post(USER_TASK_PRIO_0, SIG_RX_HUMAN, 'y');
+	else
+		system_os_post(USER_TASK_PRIO_0, SIG_RX_HUMAN, 'n');
 }
 void ICACHE_FLASH_ATTR
 user_sensor_init(void)

@@ -7,7 +7,7 @@
 #include "espconn.h"
 
 
-#define STATION_IP_ADDR		("192.168.10.112")
+#define STATION_IP_ADDR		("192.168.10.111")
 #define STATION_IP_GW		("192.168.10.1")
 #define STATION_IP_NETMASK	("255.255.255.0")
 

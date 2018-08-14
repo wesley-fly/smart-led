@@ -13,8 +13,8 @@
 #define LED_ONOFF_IO_FUNC				FUNC_GPIO13
 
 #define PWM_CHANNEL_NUM					1
-#define PWM_PERIOD_NUM					500  //0.5khz
-#define PWM_DUTY_MAX					11111
+#define PWM_PERIOD_NUM					1000  //0.5khz
+#define PWM_DUTY_MAX					22222
 
 #define LED_PWM_IO_MUX					PERIPHS_IO_MUX_MTDI_U
 #define LED_PWM_IO_NUM					12
